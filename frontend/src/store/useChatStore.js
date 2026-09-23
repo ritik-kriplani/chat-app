@@ -56,7 +56,7 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  sendMessage: async (messageData) => {
+  sendMessage: async (messageData, file) => {
     const { selectedUser, messages } = get();
     const { authUser } = useAuthStore.getState();
 
@@ -69,14 +69,30 @@ export const useChatStore = create((set, get) => ({
       text: messageData.text,
       image: messageData.image,
       createdAt: new Date().toISOString(),
-      isOptimistic: true, // flag to identify optimistic messages (optional)
+      isOptimistic: true,
     };
     // immidetaly update the ui by adding the message
     set({ messages: [...messages, optimisticMessage] });
 
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: messages.concat(res.data) });
+      let payload;
+      if (file) {
+        payload = new FormData();
+        payload.append("text", messageData.text);
+        payload.append("image", file);
+        // Let axios set the correct multipart headers
+        const res = await axiosInstance.post(
+          `/messages/send/${selectedUser._id}`,
+          payload
+        );
+        set({ messages: messages.concat(res.data) });
+      } else {
+        const res = await axiosInstance.post(
+          `/messages/send/${selectedUser._id}`,
+          messageData
+        );
+        set({ messages: messages.concat(res.data) });
+      }
     } catch (error) {
       // remove optimistic message on failure
       set({ messages: messages });

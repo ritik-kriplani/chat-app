@@ -36,11 +36,12 @@ export const getMessagesByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
-    if (!text && !image) {
+    // Require either text or an uploaded image file
+    if (!text && !req.file) {
       return res.status(400).json({ message: "Text or image is required." });
     }
     if (senderId.equals(receiverId)) {
@@ -52,10 +53,21 @@ export const sendMessage = async (req, res) => {
     }
 
     let imageUrl;
-    if (image) {
-      // upload base64 image to cloudinary
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
+    // If an image file was uploaded via multipart/form-data, upload it to Cloudinary
+    if (req.file) {
+      console.log('Received file path:', req.file.path);
+      const fs = await import('fs');
+      console.log('File exists?', fs.existsSync(req.file.path));
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(req.file.path);
+        imageUrl = uploadResponse.secure_url;
+        // delete the temporary file after successful upload
+        const fs = await import('fs');
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        console.error('Cloudinary upload error:', err);
+        return res.status(500).json({ error: 'Image upload failed' });
+      }
     }
 
     const newMessage = new Message({
