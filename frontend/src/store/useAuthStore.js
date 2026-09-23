@@ -9,6 +9,8 @@ export const useAuthStore = create((set, get) => ({
   authUser: null,
   isCheckingAuth: true,
   isSigningUp: false,
+  isSendingOtp: false,
+  isVerifyingOtp: false,
   isLoggingIn: false,
   socket: null,
   onlineUsers: [],
@@ -26,19 +28,38 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  signup: async (data) => {
-    set({ isSigningUp: true });
+  sendOtp: async (data) => {
+    set({ isSendingOtp: true });
     try {
-      const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
-
-      toast.success("Account created successfully!");
-      get().connectSocket();
+      await axiosInstance.post("/auth/send-otp", data);
+      toast.success("Verification code sent to " + data.email);
+      return true;
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Failed to send OTP code");
+      return false;
     } finally {
-      set({ isSigningUp: false });
+      set({ isSendingOtp: false });
     }
+  },
+
+  verifyOtp: async (data) => {
+    set({ isVerifyingOtp: true });
+    try {
+      const res = await axiosInstance.post("/auth/verify-otp", data);
+      set({ authUser: res.data });
+      toast.success("Email verified & account created! 🎉");
+      get().connectSocket();
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "OTP verification failed");
+      return false;
+    } finally {
+      set({ isVerifyingOtp: false });
+    }
+  },
+
+  signup: async (data) => {
+    return get().sendOtp(data);
   },
 
   login: async (data) => {
