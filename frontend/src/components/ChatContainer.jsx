@@ -35,34 +35,46 @@ function ChatContainer() {
   return (
     <>
       <ChatHeader />
-      <div className="flex-1 px-6 overflow-y-auto py-8">
+      <div className="flex-1 px-4 md:px-8 overflow-y-auto py-6" style={{ background: "#fffbf7" }}>
         {messages.length > 0 && !isMessagesLoading ? (
-          <div className="max-w-3xl mx-auto space-y-6">
-            {messages.map((msg) => (
-              <div
-                key={msg._id}
-                className={`chat ${msg.senderId === authUser._id ? "chat-end" : "chat-start"}`}
-              >
+          <div className="w-full space-y-4">
+            {messages.map((msg) => {
+              const isSentByMe = msg.senderId === authUser._id;
+
+              return (
                 <div
-                  className={`chat-bubble relative ${
-                    msg.senderId === authUser._id
-                      ? "bg-cyan-600 text-white"
-                      : "bg-slate-800 text-slate-200"
-                  }`}
+                  key={msg._id}
+                  className={`flex flex-col ${isSentByMe ? "items-end" : "items-start"}`}
                 >
-                  {msg.image && (
-                    <img src={msg.image} alt="Shared" className="rounded-lg h-48 object-cover" />
-                  )}
-                  {msg.text && <p className="mt-2">{msg.text}</p>}
-                  <p className="text-xs mt-1 opacity-75 flex items-center gap-1">
-                    {new Date(msg.createdAt).toLocaleTimeString(undefined, {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
+                  <div
+                    className={`max-w-[85%] md:max-w-[70%] p-3.5 rounded-2xl shadow-xs text-sm ${
+                      isSentByMe
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-br-xs shadow-orange-500/10"
+                        : "bg-white text-stone-800 border border-orange-100/80 rounded-bl-xs shadow-orange-950/5"
+                    }`}
+                  >
+                    {msg.image && (
+                      <img
+                        src={msg.image}
+                        alt="Shared"
+                        className="rounded-xl max-h-72 w-full object-cover mb-2"
+                      />
+                    )}
+                    {msg.text && <p className="leading-relaxed font-normal">{msg.text}</p>}
+                    <div
+                      className={`text-[10px] mt-1.5 font-medium ${
+                        isSentByMe ? "text-orange-100 text-right" : "text-stone-400"
+                      }`}
+                    >
+                      {new Date(msg.createdAt).toLocaleTimeString(undefined, {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {/* 👇 scroll target */}
             <div ref={messageEndRef} />
           </div>
@@ -79,3 +91,4 @@ function ChatContainer() {
 }
 
 export default ChatContainer;
+
