@@ -12,13 +12,15 @@ export const getTransporter = async () => {
 
     if (isGmail) {
       transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.gmail.com",
+        port: 465,
+        secure: true, // SSL Port 465 bypasses cloud hosting (Render/AWS) port 587 blocks
         auth: {
           user: ENV.SMTP_USER,
           pass: ENV.SMTP_PASS,
         },
       });
-      console.log(`[MAILER] Configured Gmail SMTP transporter (${ENV.SMTP_USER})`);
+      console.log(`[MAILER] Configured Gmail SMTP transporter via Port 465 SSL (${ENV.SMTP_USER})`);
     } else {
       transporter = nodemailer.createTransport({
         host: ENV.SMTP_HOST || "smtp.gmail.com",
