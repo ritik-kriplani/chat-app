@@ -3,7 +3,9 @@ import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-let rawSocketUrl = import.meta.env.VITE_API_URL || (import.meta.env.MODE === "development" ? "http://localhost:3000" : "/");
+let rawSocketUrl = import.meta.env.MODE === "development"
+  ? "http://localhost:3000"
+  : (import.meta.env.VITE_API_URL || "/");
 rawSocketUrl = rawSocketUrl.replace(/\/+$/, "");
 if (rawSocketUrl.endsWith("/api")) {
   rawSocketUrl = rawSocketUrl.slice(0, -4);

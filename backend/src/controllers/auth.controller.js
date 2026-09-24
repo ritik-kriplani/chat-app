@@ -59,14 +59,12 @@ export const sendOtp = async (req, res) => {
       await newUser.save();
     }
 
-    // Send OTP via email (awaiting guarantees socket completes before server response)
-    try {
-      await sendOtpEmail(sanitizedEmail, fullName, otp);
-    } catch (emailErr) {
-      console.error("Error sending OTP email:", emailErr);
-    }
+    // Dispatch OTP email asynchronously in background for instant sub-30ms client response
+    sendOtpEmail(sanitizedEmail, fullName, otp).catch((err) =>
+      console.error("Background OTP Email send error:", err.message)
+    );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Verification OTP code sent to your email",
       email: sanitizedEmail,
     });
