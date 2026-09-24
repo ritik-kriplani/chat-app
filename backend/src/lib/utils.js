@@ -11,11 +11,13 @@ export const generateToken = (userId, res) => {
     expiresIn: "7d",
   });
 
+  const isProduction = ENV.NODE_ENV === "production";
+
   res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // MS
-    httpOnly: true, // prevent XSS attacks: cross-site scripting
-    sameSite: "strict", // CSRF attacks
-    secure: ENV.NODE_ENV === "development" ? false : true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in MS
+    httpOnly: true, // prevent XSS attacks
+    sameSite: isProduction ? "none" : "lax", // mandatory for cross-domain hosting (e.g. Vercel frontend + Render backend)
+    secure: isProduction, // mandatory when sameSite is 'none'
   });
 
   return token;

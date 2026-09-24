@@ -1,9 +1,13 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === "development" ? "http://localhost:3000" : "");
+let rawBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.MODE === "development" ? "http://localhost:3000" : "");
+rawBaseUrl = rawBaseUrl.replace(/\/+$/, "");
+if (rawBaseUrl.endsWith("/api")) {
+  rawBaseUrl = rawBaseUrl.slice(0, -4);
+}
 
 export const axiosInstance = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: rawBaseUrl ? `${rawBaseUrl}/api` : "/api",
   withCredentials: true,
 });
 

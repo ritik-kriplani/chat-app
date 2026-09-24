@@ -13,8 +13,26 @@ const __dirname = path.resolve();
 
 const PORT = ENV.PORT || 3000;
 
+// Enable trust proxy for deployment platforms (Render, Railway, Vercel, Heroku, etc.)
+app.set("trust proxy", 1);
+
 app.use(express.json({ limit: "5mb" })); // req.body
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+
+const clientUrl = ENV.CLIENT_URL ? ENV.CLIENT_URL.replace(/\/+$/, "") : "";
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps/curl), matching clientUrl, or any development origin
+      if (!origin || !clientUrl || origin === clientUrl || origin.replace(/\/+$/, "") === clientUrl || origin.startsWith("http://localhost")) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(cookieParser());
 
 // Health check endpoints for keep-alive cron jobs (e.g., cron-job.org / UptimeRobot)

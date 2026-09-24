@@ -7,9 +7,17 @@ import { socketAuthMiddleware } from "../middleware/socket.auth.middleware.js";
 const app = express();
 const server = http.createServer(app);
 
+const clientUrl = ENV.CLIENT_URL ? ENV.CLIENT_URL.replace(/\/+$/, "") : "";
+
 const io = new Server(server, {
   cors: {
-    origin: [ENV.CLIENT_URL],
+    origin: (origin, callback) => {
+      if (!origin || !clientUrl || origin === clientUrl || origin.replace(/\/+$/, "") === clientUrl || origin.startsWith("http://localhost")) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
   },
 });
