@@ -43,26 +43,36 @@ export const sendOtpEmail = async (email, name, otp) => {
   const senderAddress = getSenderEmail();
   let sent = false;
 
-  console.log(`\n==========================================\n[VERIFICATION OTP FOR ${email}]: ${otp}\n==========================================\n`);
+  console.log(`\n==========================================`);
+  console.log(`[SEND_OTP_EMAIL STARTED] Target Email: ${email} | Code: ${otp}`);
+  console.log(`==========================================\n`);
 
-  // 1. Try Resend API first (fast HTTP call, bypasses SMTP socket blocks)
+  // 1. Try Resend API first (fast HTTP call)
   if (resendClient) {
     try {
-      await resendClient.emails.send({
+      console.log(`[RESEND] Attempting to send OTP email via Resend to ${email}...`);
+      const resendRes = await resendClient.emails.send({
         from: `${sender.name} <${sender.email}>`,
         to: email,
         subject: `Your Chatify Verification Code: ${otp}`,
         html,
       });
-      console.log(`[EMAIL SENT] OTP verification code delivered via Resend to ${email}`);
-      sent = true;
+      if (resendRes.error) {
+        console.error(`[RESEND ERROR RESPONSE]`, resendRes.error);
+      } else {
+        console.log(`[RESEND SUCCESS] OTP email delivered to ${email} (ID: ${resendRes.data?.id})`);
+        sent = true;
+      }
     } catch (err) {
-      console.error("[RESEND ERROR] Failed to send via Resend:", err.message);
+      console.error(`[RESEND EXCEPTION] Failed to send via Resend:`, err.message);
     }
+  } else {
+    console.log(`[RESEND SKIPPED] RESEND_API_KEY is not configured.`);
   }
 
   // 2. Try Nodemailer SMTP fallback if Resend was not configured/sent
   if (!sent) {
+    console.log(`[SMTP] Attempting Nodemailer SMTP fallback for ${email}...`);
     const mailer = await getTransporter();
     if (mailer) {
       try {
@@ -72,15 +82,17 @@ export const sendOtpEmail = async (email, name, otp) => {
           subject: `Your Chatify Verification Code: ${otp}`,
           html,
         });
-        console.log(`[EMAIL SENT] Real OTP verification code delivered to ${email} (ID: ${info.messageId})`);
+        console.log(`[SMTP SUCCESS] Real OTP verification code delivered to ${email} (Message ID: ${info.messageId})`);
         sent = true;
       } catch (err) {
-        console.error("[MAILER ERROR] Failed to send via SMTP:", err.message);
+        console.error(`[SMTP ERROR] Failed to send via SMTP:`, err.message);
       }
+    } else {
+      console.log(`[SMTP SKIPPED] SMTP_USER/SMTP_PASS are not configured.`);
     }
   }
 
   if (!sent) {
-    console.warn(`[WARNING] Email dispatch unconfigured or failed for ${email}. Check SMTP_USER/SMTP_PASS or RESEND_API_KEY in server .env.`);
+    console.warn(`[WARNING] Email dispatch failed for ${email}. Check SMTP/Resend settings in .env.`);
   }
 };
