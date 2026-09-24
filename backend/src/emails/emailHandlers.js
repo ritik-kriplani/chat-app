@@ -45,25 +45,8 @@ export const sendOtpEmail = async (email, name, otp) => {
 
   console.log(`\n==========================================\n[VERIFICATION OTP FOR ${email}]: ${otp}\n==========================================\n`);
 
-  // 1. Try Nodemailer SMTP (Gmail, Outlook, Ethereal, custom SMTP)
-  const mailer = await getTransporter();
-  if (mailer) {
-    try {
-      const info = await mailer.sendMail({
-        from: `"${sender.name}" <${senderAddress}>`,
-        to: email,
-        subject: `Your Chatify Verification Code: ${otp}`,
-        html,
-      });
-      console.log(`[EMAIL SENT] Real OTP verification code delivered to ${email} (ID: ${info.messageId})`);
-      sent = true;
-    } catch (err) {
-      console.error("[MAILER ERROR] Failed to send via SMTP:", err.message);
-    }
-  }
-
-  // 2. Try Resend if SMTP was not sent
-  if (!sent && resendClient) {
+  // 1. Try Resend API first (fast HTTP call, bypasses SMTP socket blocks)
+  if (resendClient) {
     try {
       await resendClient.emails.send({
         from: `${sender.name} <${sender.email}>`,
@@ -75,6 +58,25 @@ export const sendOtpEmail = async (email, name, otp) => {
       sent = true;
     } catch (err) {
       console.error("[RESEND ERROR] Failed to send via Resend:", err.message);
+    }
+  }
+
+  // 2. Try Nodemailer SMTP fallback if Resend was not configured/sent
+  if (!sent) {
+    const mailer = await getTransporter();
+    if (mailer) {
+      try {
+        const info = await mailer.sendMail({
+          from: `"${sender.name}" <${senderAddress}>`,
+          to: email,
+          subject: `Your Chatify Verification Code: ${otp}`,
+          html,
+        });
+        console.log(`[EMAIL SENT] Real OTP verification code delivered to ${email} (ID: ${info.messageId})`);
+        sent = true;
+      } catch (err) {
+        console.error("[MAILER ERROR] Failed to send via SMTP:", err.message);
+      }
     }
   }
 
