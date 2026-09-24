@@ -23,8 +23,10 @@ export const sendOtp = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
+    const sanitizedEmail = email.trim().toLowerCase();
+
     // Check if verified user exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: sanitizedEmail });
     if (existingUser && existingUser.isVerified) {
       return res.status(400).json({ message: "Email is already registered. Please sign in." });
     }
@@ -39,6 +41,7 @@ export const sendOtp = async (req, res) => {
     if (existingUser) {
       // Update existing unverified user record
       existingUser.fullName = fullName;
+      existingUser.email = sanitizedEmail;
       existingUser.password = hashedPassword;
       existingUser.verificationOtp = otp;
       existingUser.verificationOtpExpires = otpExpires;
@@ -47,7 +50,7 @@ export const sendOtp = async (req, res) => {
       // Create new unverified user
       const newUser = new User({
         fullName,
-        email,
+        email: sanitizedEmail,
         password: hashedPassword,
         verificationOtp: otp,
         verificationOtpExpires: otpExpires,
@@ -57,15 +60,15 @@ export const sendOtp = async (req, res) => {
     }
 
     // Send OTP via email
-    await sendOtpEmail(email, fullName, otp);
+    await sendOtpEmail(sanitizedEmail, fullName, otp);
 
     res.status(200).json({
       message: "Verification OTP code sent to your email",
-      email,
+      email: sanitizedEmail,
     });
   } catch (error) {
     console.error("Error in sendOtp controller:", error);
-    res.status(500).json({ message: "Failed to send OTP code" });
+    res.status(500).json({ message: error.message || "Failed to send OTP code" });
   }
 };
 
@@ -78,7 +81,9 @@ export const verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "Email and OTP code are required" });
     }
 
-    const user = await User.findOne({ email });
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: sanitizedEmail });
     if (!user) {
       return res.status(400).json({ message: "Registration record not found. Please sign up again." });
     }

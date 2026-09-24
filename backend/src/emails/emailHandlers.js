@@ -43,6 +43,8 @@ export const sendOtpEmail = async (email, name, otp) => {
   const senderAddress = getSenderEmail();
   let sent = false;
 
+  console.log(`\n==========================================\n[VERIFICATION OTP FOR ${email}]: ${otp}\n==========================================\n`);
+
   // 1. Try Nodemailer SMTP (Gmail, Outlook, Ethereal, custom SMTP)
   const mailer = await getTransporter();
   if (mailer) {
@@ -78,5 +80,6 @@ export const sendOtpEmail = async (email, name, otp) => {
 
   if (!sent) {
     console.warn(`[WARNING] Unable to dispatch verification email to ${email}. Check SMTP/Resend settings in .env.`);
+    throw new Error("Failed to send OTP email. Please check your backend email configuration (SMTP credentials or Resend API Key in .env).");
   }
 };
