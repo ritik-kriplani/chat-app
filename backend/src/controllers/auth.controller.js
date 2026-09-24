@@ -145,10 +145,14 @@ export const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
-    // never tell the client which one is incorrect: password or email
-
+    
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" });
+
+    // ADD THIS GUARD: Prevent login if the user hasn't verified their OTP
+    if (!user.isVerified) {
+      return res.status(403).json({ message: "Please verify your email before logging in." });
+    }
 
     generateToken(user._id, res);
 
