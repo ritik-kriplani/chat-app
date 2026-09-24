@@ -13,6 +13,10 @@ export const getTransporter = async () => {
     if (isGmail) {
       transporter = nodemailer.createTransport({
         service: "gmail",
+        pool: true,
+        maxConnections: 5,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
         auth: {
           user: ENV.SMTP_USER,
           pass: ENV.SMTP_PASS,
@@ -24,6 +28,9 @@ export const getTransporter = async () => {
         host: ENV.SMTP_HOST || "smtp.gmail.com",
         port: Number(ENV.SMTP_PORT) || 587,
         secure: ENV.SMTP_SECURE === "true" || Number(ENV.SMTP_PORT) === 465,
+        pool: true,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
         auth: {
           user: ENV.SMTP_USER,
           pass: ENV.SMTP_PASS,
@@ -34,24 +41,8 @@ export const getTransporter = async () => {
     return transporter;
   }
 
-  // 2. Otherwise fallback to Ethereal test account
-  try {
-    const testAccount = await nodemailer.createTestAccount();
-    transporter = nodemailer.createTransport({
-      host: "smtp.ethereal.email",
-      port: 587,
-      secure: false,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    console.log(`[MAILER] Created temporary Ethereal test account (${testAccount.user})`);
-    return transporter;
-  } catch (err) {
-    console.error("[MAILER] Failed to create test SMTP transporter:", err);
-    return null;
-  }
+  // 2. If no SMTP credentials configured, return null immediately (no network lag)
+  return null;
 };
 
 export const getSenderEmail = () => {

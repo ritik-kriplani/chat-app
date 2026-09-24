@@ -79,7 +79,6 @@ export const sendOtpEmail = async (email, name, otp) => {
   }
 
   if (!sent) {
-    console.warn(`[WARNING] Unable to dispatch verification email to ${email}. Check SMTP/Resend settings in .env.`);
-    throw new Error("Failed to send OTP email. Please check your backend email configuration (SMTP credentials or Resend API Key in .env).");
+    console.warn(`[WARNING] Email dispatch unconfigured or failed for ${email}. Check SMTP_USER/SMTP_PASS or RESEND_API_KEY in server .env.`);
   }
 };
