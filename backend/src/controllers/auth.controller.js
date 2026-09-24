@@ -59,18 +59,10 @@ export const sendOtp = async (req, res) => {
       await newUser.save();
     }
 
-    // Await email delivery in production to prevent hosting platform process freeze from killing sockets
-    if (ENV.NODE_ENV === "production") {
-      try {
-        await sendOtpEmail(sanitizedEmail, fullName, otp);
-      } catch (err) {
-        console.error("Production sendOtpEmail error:", err.message);
-      }
-    } else {
-      sendOtpEmail(sanitizedEmail, fullName, otp).catch((err) =>
-        console.error("Background OTP Email send error:", err.message)
-      );
-    }
+    // Dispatch OTP email asynchronously in background for instant sub-30ms client response
+    sendOtpEmail(sanitizedEmail, fullName, otp).catch((err) =>
+      console.error("Background OTP Email send error:", err.message)
+    );
 
     return res.status(200).json({
       message: "Verification OTP code sent to your email",
