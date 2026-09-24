@@ -13,10 +13,6 @@ export const getTransporter = async () => {
     if (isGmail) {
       transporter = nodemailer.createTransport({
         service: "gmail",
-        pool: true,
-        maxConnections: 5,
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
         auth: {
           user: ENV.SMTP_USER,
           pass: ENV.SMTP_PASS,
@@ -28,9 +24,6 @@ export const getTransporter = async () => {
         host: ENV.SMTP_HOST || "smtp.gmail.com",
         port: Number(ENV.SMTP_PORT) || 587,
         secure: ENV.SMTP_SECURE === "true" || Number(ENV.SMTP_PORT) === 465,
-        pool: true,
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
         auth: {
           user: ENV.SMTP_USER,
           pass: ENV.SMTP_PASS,
@@ -41,7 +34,7 @@ export const getTransporter = async () => {
     return transporter;
   }
 
-  // 2. If no SMTP credentials configured, return null immediately (no network lag)
+  // 2. If no SMTP credentials configured, return null immediately
   return null;
 };
 
